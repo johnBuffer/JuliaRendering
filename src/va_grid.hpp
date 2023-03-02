@@ -20,7 +20,7 @@ struct VertexArrayGrid
 
     void setCellColor(uint32_t x, uint32_t y, sf::Color color)
     {
-        const uint32_t idx = x + y * size.x;
+        const uint32_t idx = x * size.y + y;
         va[idx].color = color;
     }
 };

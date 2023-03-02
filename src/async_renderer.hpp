@@ -138,7 +138,7 @@ struct AsyncRenderer
                             color_vec += palette.getColorVec(iter_ratio);
                         }
                         // Update color
-                        grid.va[x * grid.size.y + y].color = Palette::vec3ToColor(color_vec * sample_coef);
+                        grid.setCellColor(x, y, Palette::vec3ToColor(color_vec * sample_coef));
                     }
                 }
             });
