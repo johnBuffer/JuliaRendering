@@ -27,7 +27,7 @@ int main()
     const FloatType        zoom_factor {1.005};
     const FloatType        speed       {1.0};
     FloatType              zoom        {400.0};
-    sf::Vector2<FloatType> center      {-2.1, -1.2};
+    sf::Vector2<FloatType> center      {0.0, 0.0};
     uint32_t iterations{20};
 
     AsyncRenderer<FloatType> renderer{window_size.x, window_size.y, zoom};

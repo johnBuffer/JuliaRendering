@@ -94,7 +94,7 @@ struct AsyncRenderer
             textures[i].setSmooth(true);
         }
 
-        font.loadFromFile("font.ttf");
+        font.loadFromFile("res/font.ttf");
         zoom_text.setFont(font);
         zoom_text.setFillColor(sf::Color::White);
         zoom_text.setCharacterSize(32);
