@@ -1,12 +1,9 @@
-#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <string>
-#include "event_manager.hpp"
-#include "binary_io.hpp"
+#include "utils/event_manager.hpp"
+#include "utils/binary_io.hpp"
 #include "async_renderer.hpp"
-
-
-using FloatType = double;
+#include "config.hpp"
 
 int main()
 {
@@ -24,22 +21,19 @@ int main()
         window.close();
     });
 
-    const FloatType        zoom_factor {1.005};
-    const FloatType        speed       {1.0};
-    FloatType              zoom        {400.0};
-    sf::Vector2<FloatType> center      {0.0, 0.0};
-    uint32_t iterations{20};
+    const Config::FloatType        zoom_factor {1.005};
+    const Config::FloatType        speed       {1.0};
+    Config::FloatType              zoom        {400.0};
+    sf::Vector2<Config::FloatType> center      {0.0, 0.0};
 
-    AsyncRenderer<FloatType> renderer{window_size.x, window_size.y, zoom};
+    AsyncRenderer<Config::FloatType> renderer{window_size.x, window_size.y, zoom};
 
-    bool zoom_in = false;
+    bool zoom_in  = false;
     bool zoom_out = false;
-    bool left = false;
-    bool right = false;
-    bool up = false;
-    bool down = false;
-    bool add_iter = false;
-    bool rem_iter = false;
+    bool left     = false;
+    bool right    = false;
+    bool up       = false;
+    bool down     = false;
 
     event_manager.addKeyPressedCallback(sf::Keyboard::A,      [&](sfev::CstEv) { zoom_in  = true;  });
     event_manager.addKeyPressedCallback(sf::Keyboard::E,      [&](sfev::CstEv) { zoom_out = true;  });
@@ -53,10 +47,6 @@ int main()
     event_manager.addKeyReleasedCallback(sf::Keyboard::Right, [&](sfev::CstEv) { right    = false; });
     event_manager.addKeyReleasedCallback(sf::Keyboard::Up,    [&](sfev::CstEv) { up       = false; });
     event_manager.addKeyReleasedCallback(sf::Keyboard::Down,  [&](sfev::CstEv) { down     = false; });
-    event_manager.addKeyPressedCallback(sf::Keyboard::Q,      [&](sfev::CstEv) { rem_iter = true;  });
-    event_manager.addKeyPressedCallback(sf::Keyboard::D,      [&](sfev::CstEv) { add_iter = true;  });
-    event_manager.addKeyReleasedCallback(sf::Keyboard::Q,     [&](sfev::CstEv) { rem_iter = false; });
-    event_manager.addKeyReleasedCallback(sf::Keyboard::D,     [&](sfev::CstEv) { add_iter = false; });
 
     event_manager.addKeyReleasedCallback(sf::Keyboard::W, [&](sfev::CstEv) {
         BinaryWriter writer{"center.bin"};
@@ -76,17 +66,14 @@ int main()
     {
         event_manager.processEvents();
 
-        const FloatType offset = speed / zoom;
+        const Config::FloatType offset = speed / zoom;
         //zoom = zoom_in ? zoom * zoom_factor : (zoom_out ? zoom / zoom_factor : zoom);
         zoom *= 1.0012;
         center.x += left ? -offset : (right ? offset : 0.0);
         center.y += up   ? -offset : (down  ? offset : 0.0);
-        iterations += add_iter ? 1 : (rem_iter ? -1 : 0);
 
         window.clear(sf::Color::Black);
-
         renderer.render(zoom, center, window);
-
         window.display();
     }
 

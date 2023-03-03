@@ -4,24 +4,26 @@
 #include <array>
 #include <chrono>
 
-#include "va_grid.hpp"
-#include "palette.hpp"
-#include "thread_pool.hpp"
-#include "utils.hpp"
-#include "number_generator.hpp"
+#include "utils/va_grid.hpp"
+#include "utils/palette.hpp"
+#include "utils/thread_pool.hpp"
+#include "utils/to_string.hpp"
+#include "utils/number_generator.hpp"
+
+#include "config.hpp"
 
 
 template<typename TFloatType>
-float julia_iter(sf::Vector2<TFloatType> pos, sf::Vector2<TFloatType> c, uint32_t max_iterations)
+float julia_iter(sf::Vector2<TFloatType> pos)
 {
     uint32_t i{0};
     TFloatType zr{pos.x};
     TFloatType zi{pos.y};
     TFloatType mod = zr * zr + zi * zi;
-    while (mod < TFloatType{4.0} && i < max_iterations) {
+    while (mod < TFloatType{4.0} && i < Config::max_iteration) {
         const TFloatType tmp = zr;
-        zr = zr * zr - zi * zi + c.x;
-        zi = TFloatType{2.0} * zi * tmp + c.y;
+        zr = zr * zr - zi * zi + Config::julia_r;
+        zi = TFloatType{2.0} * zi * tmp + Config::julia_i;
         mod = zr * zr + zi * zi;
         ++i;
     }
@@ -64,24 +66,23 @@ struct AsyncRenderer
     sf::Font font;
     sf::Text zoom_text;
 
-    uint32_t frame_count = 0;
-
-    float fade_time = 2.0f;
+    float fade_time = Config::fade_time;
 
     AsyncRenderer(uint32_t width, uint32_t height, TFloatType zoom_)
         : thread_pool{16}
         , states{RenderState<TFloatType>(width, height), RenderState<TFloatType>(width, height)}
     {
         requested_zoom = zoom_;
-        palette.addColorPoint(0.0f, sf::Color{25, 24, 23});
+        palette.addColorPoint(0.0f , sf::Color{25, 24, 23});
         palette.addColorPoint(0.03f, sf::Color{120, 90, 70});
         palette.addColorPoint(0.05f, sf::Color{130, 24, 23});
         palette.addColorPoint(0.25f, sf::Color{250, 179, 100});
-        palette.addColorPoint(0.5f, sf::Color{43, 65, 98});
+        palette.addColorPoint(0.5f , sf::Color{43, 65, 98});
         palette.addColorPoint(0.85f, sf::Color{11, 110, 79});
         palette.addColorPoint(0.95f, sf::Color{150, 110, 79});
-        palette.addColorPoint(1.0f, sf::Color{255, 255, 255});
+        palette.addColorPoint(1.0f , sf::Color{255, 255, 255});
 
+        // Precompute Monte Carlo offsets
         for (auto& o : anti_aliasing_offsets) {
             o.x = RNGf::getUnder(1.0f);
             o.y = RNGf::getUnder(1.0f);
@@ -106,7 +107,7 @@ struct AsyncRenderer
         thread_pool.waitForCompletion();
     }
 
-    void generate(uint32_t max_iterations)
+    void generate()
     {
         // Get the back buffer
         RenderState<TFloatType>& state = states[!state_idx];
@@ -121,8 +122,7 @@ struct AsyncRenderer
         thread_pool.m_queue.m_remaining_tasks = thread_pool.m_thread_count;
         for (uint32_t k{0}; k < thread_pool.m_thread_count; ++k) {
             thread_pool.addTaskNoIncrement([=] {
-                constexpr uint32_t sample_count = 12;
-                constexpr float    sample_coef  = 1.0f / static_cast<float>(sample_count);
+                constexpr float    sample_coef  = 1.0f / static_cast<float>(Config::samples_count);
                 auto&     grid                  = states[!state_idx].grid;
                 for (uint32_t x{0}; x < grid.size.x; ++x) {
                     for (uint32_t y{k * slice_height}; y < (k+1) * slice_height; ++y) {
@@ -131,10 +131,10 @@ struct AsyncRenderer
                         // AA color accumulator
                         sf::Vector3f color_vec;
                         // Monte Carlo color integration
-                        for (uint32_t i{sample_count}; i--;) {
+                        for (uint32_t i{Config::samples_count}; i--;) {
                             const sf::Vector2<TFloatType> off        = anti_aliasing_offsets[i] / render_zoom;
-                            const float                   iter       = julia_iter<TFloatType>({xf + off.x, yf + off.y}, {-0.8, 0.156}, max_iterations);
-                            const float                   iter_ratio = iter / static_cast<float>(max_iterations);
+                            const float                   iter       = julia_iter<TFloatType>({xf + off.x, yf + off.y});
+                            const float                   iter_ratio = iter / static_cast<float>(Config::max_iteration);
                             color_vec += palette.getColorVec(iter_ratio);
                         }
                         // Update color
@@ -147,9 +147,8 @@ struct AsyncRenderer
 
     void render(TFloatType zoom, sf::Vector2<TFloatType> center, sf::RenderTarget& target)
     {
-        constexpr float fade_time_target = 2.0f;
         // Check if background rendering is ready
-        if (fade_time >= fade_time_target && thread_pool.isDone())
+        if (fade_time >= Config::fade_time && thread_pool.isDone())
         {
             // Update state
             auto& state  = states[!state_idx];
@@ -163,7 +162,7 @@ struct AsyncRenderer
             texture_idx = !texture_idx;
             fade_time = 0.0f;
             // Start next render
-            generate(1000);
+            generate();
         }
 
         requested_center = center;
@@ -181,7 +180,7 @@ struct AsyncRenderer
         sprite_old.setOrigin(origin);
         sprite_old.setPosition(origin + getStateOffset(!state_idx));
         sprite_old.setScale(scale_old, scale_old);
-        const auto alpha = static_cast<uint8_t>(std::max(0.0f, 1.0f - fade_time / fade_time_target) * 255.0f);
+        const auto alpha = static_cast<uint8_t>(std::max(0.0f, 1.0f - fade_time / Config::fade_time) * 255.0f);
         sprite_old.setColor(sf::Color{255, 255, 255, alpha});
 
         zoom_text.setString(toString(center.x) + " " + toString(center.y));
