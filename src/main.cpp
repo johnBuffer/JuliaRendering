@@ -21,9 +21,9 @@ int main()
         window.close();
     });
 
-    const Config::FloatType        zoom_factor {1.005};
-    const Config::FloatType        speed       {1.0};
-    Config::FloatType              zoom        {400.0};
+    const auto                     zoom_factor = static_cast<Config::FloatType>(1.005);
+    const auto                     speed       = static_cast<Config::FloatType>(1.0);
+    auto                           zoom        = static_cast<Config::FloatType>(window.getSize().y) / 2;
     sf::Vector2<Config::FloatType> center      {0.0, 0.0};
 
     AsyncRenderer<Config::FloatType> renderer{window_size.x, window_size.y, zoom};
@@ -67,10 +67,11 @@ int main()
         event_manager.processEvents();
 
         const Config::FloatType offset = speed / zoom;
-        //zoom = zoom_in ? zoom * zoom_factor : (zoom_out ? zoom / zoom_factor : zoom);
-        zoom *= 1.0012;
-        center.x += left ? -offset : (right ? offset : 0.0);
-        center.y += up   ? -offset : (down  ? offset : 0.0);
+        zoom = zoom_in ? zoom * zoom_factor : (zoom_out ? zoom / zoom_factor : zoom);
+        // Auto zoom
+        //zoom *= 1.0012;
+        center.x += left ? -offset : (right ? offset : Config::FloatType{});
+        center.y += up   ? -offset : (down  ? offset : Config::FloatType{});
 
         window.clear(sf::Color::Black);
         renderer.render(zoom, center, window);
