@@ -63,9 +63,6 @@ struct AsyncRenderer
 
     Palette palette;
 
-    sf::Font font;
-    sf::Text zoom_text;
-
     float fade_time = Config::fade_time;
 
     AsyncRenderer(uint32_t width, uint32_t height, TFloatType zoom_)
@@ -94,12 +91,6 @@ struct AsyncRenderer
             textures[i].create(width, height);
             textures[i].setSmooth(true);
         }
-
-        font.loadFromFile("res/font.ttf");
-        zoom_text.setFont(font);
-        zoom_text.setFillColor(sf::Color::White);
-        zoom_text.setCharacterSize(32);
-        zoom_text.setPosition(20.0f, 20.0f);
     }
 
     ~AsyncRenderer()
@@ -183,11 +174,8 @@ struct AsyncRenderer
         const auto alpha = static_cast<uint8_t>(std::max(0.0f, 1.0f - fade_time / Config::fade_time) * 255.0f);
         sprite_old.setColor(sf::Color{255, 255, 255, alpha});
 
-        zoom_text.setString(toString(center.x) + " " + toString(center.y));
-
         target.draw(sprite_new);
         target.draw(sprite_old);
-        //target.draw(zoom_text);
 
         fade_time += 0.016f;
     }
