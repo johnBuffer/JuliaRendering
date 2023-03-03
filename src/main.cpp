@@ -22,7 +22,7 @@ int main()
     });
 
     const Config::FloatType        zoom_factor {1.005};
-    const Config::FloatType        speed       {1.0};
+    const Config::FloatType        speed       {2.0};
     Config::FloatType              zoom        {400.0};
     sf::Vector2<Config::FloatType> center      {0.0, 0.0};
 
@@ -67,8 +67,8 @@ int main()
         event_manager.processEvents();
 
         const Config::FloatType offset = speed / zoom;
-        //zoom = zoom_in ? zoom * zoom_factor : (zoom_out ? zoom / zoom_factor : zoom);
-        zoom *= 1.0012;
+        zoom = zoom_in ? zoom * zoom_factor : (zoom_out ? zoom / zoom_factor : zoom);
+        //zoom *= 1.0012;
         center.x += left ? -offset : (right ? offset : 0.0);
         center.y += up   ? -offset : (down  ? offset : 0.0);
 

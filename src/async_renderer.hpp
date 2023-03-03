@@ -22,8 +22,8 @@ float julia_iter(sf::Vector2<TFloatType> pos)
     TFloatType mod = zr * zr + zi * zi;
     while (mod < TFloatType{4.0} && i < Config::max_iteration) {
         const TFloatType tmp = zr;
-        zr = zr * zr - zi * zi + Config::julia_r;
-        zi = TFloatType{2.0} * zi * tmp + Config::julia_i;
+        zr = zr * zr - zi * zi + pos.x;
+        zi = TFloatType{2.0} * zi * tmp + pos.y;
         mod = zr * zr + zi * zi;
         ++i;
     }
