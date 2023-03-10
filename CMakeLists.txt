@@ -21,9 +21,6 @@ if (UNIX)
    target_link_libraries(${PROJECT_NAME} pthread)
 endif (UNIX)
 
-# Copy res dir to the binary directory
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 if(MSVC)
    foreach(lib ${SFML_LIBS})
       get_target_property(lib_path ${lib} LOCATION)
